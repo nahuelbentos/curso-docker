@@ -1,0 +1,10 @@
+FROM nginx
+
+ENV dir=/usr/share/nginx/html/test.txt
+
+RUN \
+    echo "61" >> $dir && \
+    echo "27" >> $dir && \
+    echo "43" >> $dir 
+
+
