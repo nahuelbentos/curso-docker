@@ -1,0 +1,35 @@
+FROM centos:7
+
+LABEL version=1.0
+LABEL description="This is an apache image"
+LABEL vendor="Nahuel Bentos"
+
+RUN yum install httpd -y 
+
+COPY startbootstrap-freelancer-master /var/www/html
+
+RUN echo "SOY :: ${whoami}" > /var/www/html/user1.html
+
+ENV contenido='Naaahuel Bentos'
+
+RUN echo "${contenido}, cómo vass?" > /var/www/html/prueba.html
+
+RUN useradd nahuel
+
+RUN chown nahuel /var/www/html/
+
+USER nahuel
+
+RUN echo " ahora SOY ::  ${whoami}" > /tmp/user2.html
+
+VOLUME [ "/data" ]
+
+USER root
+
+RUN cp /tmp/user2.html /var/www/html/user2.html
+
+COPY run.sh /run.sh
+
+CMD  sh /run.sh
+
+ 

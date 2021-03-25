@@ -1,0 +1,213 @@
+docker ps -a                          
+      => me muestra los contenedores creados
+
+docker rm -f [container-name]       
+      => elimina el contenedor de nombre [container-name]
+      => -fv: Elimina también los volumenes
+
+docker build -t [image-name] .                     
+      => "compila" el image de nombre [image-name]
+
+docker run -d -p [local-port]:[docker-port] [image-name]
+      => Corre el contenedor [image-name] en el puerto local [local-port] apuntandolo al puerto de docker [docker-port]
+
+docker logs container-name
+      => Permite ver los logs del contenedor
+      
+
+docker exec -ti [container-name] bash
+      => Permite acceder al bash del contenedor 
+
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout mysitename.key -out mysitename.crt
+      => generar certificado ssl
+            => Ejemplo: openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout docker.key -out docker.crt
+
+configuracion de ssl => https://www.digicert.com/kb/ssl-support/apache-multiple-ssl-certificates-using-sni.htm
+
+docker images 
+      => ver las imagenes
+
+docker rmi [id] / [name:tag]
+      => Elimina una imagen por el id, o por el nombre:tag. Se pueden eliminar varias en la misma linea, agregando los diferentes [id]/[name:tag]
+            => Ejemplos: 
+                  docker rmi facfc05b2553
+                  docker rmi facfc05b2553
+                  docker rmi nginx:v1
+
+docker build -t [container-name] -f [file-name] .
+      => con el tag -f podemos indicar el nombre del dockerfile, por si quiseramos tenerlo con un nombre particular
+      => Ejemplo: docker build -t test -f my-dockerfile 
+
+Dangling images 
+      => Son imagenes que quedan "huerfanas". Al modificar alguna capa del dockerfile y hacer un build, se crea una nueva imagen
+      y la anterior con el mismo nombre y mismo tag queda del modo <none>:<none>
+
+docker images -f dangling=true
+      => Devuelve las imagenes huerfanas
+      
+docker images -f dangling=true -q
+      => El flag -q nos devuelve solo los Id de las imagenes
+
+docker images -f dangling=true -q | xargs docker rmi
+      => Elimina TODAS las imagenes dangling. 
+
+docker image prune -a
+      => Elimina toda las imagenes que no estan asociadas a un contenedor.
+      
+docker run -d --name [container-name] -p [local-port]:[docker-port] [image-name] 
+      => Corre la imagen [image-name] en el puerto local [local-port] apuntandolo al puerto de docker [docker-port]
+       y le asigna el nombre  [container-name] al contenedor.
+
+Multi-Stage-Build => significa que podemos generar dos "FROMs" y generar nuestra imagen desde una mas pequenia.
+      => Ejemplo: Cuando queremos generar un jar con maven y correrlo con java:
+            FROM maven:3.5-alpine as builder  => Generamos el builder
+
+            COPY app /app
+
+            RUN cd /app && mvn package
+
+            FROM openjdk:8-alpine => Generamos la imagen resultante con un peso menor a la anterior.
+
+            COPY --from=builder /app/target/my-app-1.0-SNAPSHOT.jar /opt/app.jar
+
+            CMD java -jar /opt/app.jar
+
+      Docker ignorará el primer from ya que asumira que es para  generar algun build o similar, y quedara con el ultimo FROM
+
+
+docker ps [flags]
+      -q : Muestra solo los id
+      -a : Muestra TODOS los contenedores 
+      -l: Muestra el ultimo contenedor creado
+
+docker ps -aq | xargs docker rm -f  
+      => elimina todos los contenedores
+      => con la opcion -fv:  Elimina también los volumenes
+
+
+docker run [flags] [CMD]
+      => -d : Envia el contenedor a segundo plano
+      => [image-name]: Selecciona el nombre de la imagen que va a estar en el contenedor.
+      => -p [local-port]:[docker-port] : Mapea el puerto local al puerto de docker.
+      => -e "[key]=[value]":  Sirve para crear variables de entorno del tipo  key value
+      => [CMD]: Si agregamos un comando al final podemos cambiar el CMD del contenedor. 
+            Por ejemplo: docker run -dti centos echo hola mundo 
+                  => echo hola mundo, sera el nuevo CMD
+      => --rm: Le instruye a docker para que el contenedor automaticamente se autodestruya
+      => -ti: ejecución temporal.
+      => -m "10mb": Permite limitar la cantidad de memoria ram del contenedor a 10mb en este caso
+      => -v [route-volume-local]:[route-volume-container] : Permite vincular una carpeta del host local al host del container para que quede persistido
+                                                            incluso cuando se elimina el container.
+      => --network [network-name]: Podemos definir la red a la que este asociado el container
+            => --ip [ip]: Agregando este tag al anterior podemos asignar una ip 
+                  => Nota: Para definir la ip tiene que estar definida la network anteriormente y tiene que tener definida una subnet y gateway.
+ 
+
+docker rm [flags] [container-name] => remueve un contenedor
+      => -f : Forzadamente, si esta activo o no
+      => [container-name]: Nombre del contenedor
+
+docker rename [old-name] [new-name]
+      => Cambia el nombre del contenedor con nombre [old-name] por [new-name]
+      => Ejemplo: docker rename trusting_heisenberg java-container
+
+docker stop [container-name]/[id]
+      => Detiene un contenedor activo pasandole el nombre o id
+      => Ejemplo: docker stop jenkins  
+
+docker start [container-name]/[id]
+      => Inicia un contenedor inactivo pasandole el nombre o id
+      => Ejemplo: docker start jenkins  
+
+docker restart [container-name]/[id]
+      => Reinicia un contenedor inactivo pasandole el nombre o id
+      => Ejemplo: docker start jenkins  
+
+docker exec -u [user] -ti [container-name] bash
+      => exec : Ejecutar
+      => -ti: 
+            t: Terminal
+            i: Interactivo
+      => bash: Terminal en bash
+      => -u: Usuario con el cual queremos ingresar a la terminal
+
+docker exec [container-name] bash -c "[command]"
+      => Permite ejecutar un comando directamente en el contenedor
+      => Ejemplo: docker exec jenkins bash -c "cat /var/jenkins_home/secrets/initialAdminPassword"
+
+docker inspect [container-name]:
+      => Te da información relevante del contenedor 
+
+docker cp [route-file] [container-name]:[route]
+docker cp [container-name]:[route] [route-target] 
+      => Nos permite copiar archivos desde afuera del contenedor hacia adentro del contenedor y viceversa
+      => Ejemplo: docker cp index.html apache:/tmp => de afuera hacia adentro
+      => Ejemplo: docker cp apache:/var/log/dpkg.log . => de adentro hacia afuera
+
+docker commit [container-name] [image-name-result]
+      => Nos permite hacer un commit del estado del contenedor que esta corriendo y guardarlo como una imagen
+      => Ejemplo: docker commit centos centos-resultante
+      => Nota: aveces hace que se pierda el CMD
+
+docker volume ls
+      => Lista los volumenes creados
+      => -f dangling=true: Filtra los volumenes dangling.
+      => -q: devuelve solo los id
+
+docker volume rm [volume-name]
+      => permite eliminar un volumen
+      => Ejemplo: docker volume rm mysql-data
+
+docker volume create [volume-name]
+      => Crea un volumen "nombrado"
+      => Ejemplo: docker volume create mysql-data
+
+docker volume ls -f dangling=true -q | xargs docker volume rm  
+      => Elimina todos los volumenes dangling
+
+docker info | grep -i root
+      => Obtiene la carpeta root de docker donde podemos ver los volumenes
+
+docker network ls 
+      => Lista todas las redes que docker creo
+      => La red host es la red del host donde esta instalado docker.
+
+docker network create [network-name]
+      => Crea una nueva network
+      => -d: Define el driver que queremos usar (Por defecto usa "Bridge")
+            => --subnet [subnet]: define la subnet que quieras crear
+            => --gateway [gateway]: define el gateway que quieras crear
+      => Ejemplo: docker network create -d bridge --subnet 172.124.10.0/24 --gateway 172.124.10.1 docker-test-network
+
+docker network inspect [network-name]
+      => Nos muestra la info de nuestra network
+
+docker network connect [network-name] [container-name]
+      => Permite conectar el contenedor [container-name] a la red [network-name].
+
+docker network disconnect [network-name] [container-name]
+      => Permite desconectar el contenedor [container-name] a la red [network-name].
+
+docker network rm [network-name]
+      => Elimina la red [network-name]
+
+INSTALAR DOCKER COMPOSE:
+      1) Buscar en google: docker compose install
+      2) En la pagina: https://docs.docker.com/compose/install/ Buscar el install compose para nuestro SO
+      3) Si es linux, loguearnos como root: sudo su
+      4) Ejecutar: curl -L "https://github.com/docker/compose/releases/download/1.28.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+      5) Darle permisos de ejecución al binario: chmod +x /usr/local/bin/docker-compose
+      6) Ejecutar binario como root para comprobar: /usr/local/bin/docker-compose
+      7) Salir del root y probar desde nuestro usuario normal: docker-compose
+      8) Listo!
+
+docker-compose up -d
+      => Levanta lo que haya en el docker-compose.yml
+      => -f [file-name]: Permite definir el nombre del archivo docker-compose.yml
+      => -p [project-name]: Sirve para reemplazar el nombre de proyecto.
+      
+docker-compose down
+      => Baja lo que haya en el docker-compose.yml
+
+docker-compose build
+      => Permite crear una imagen desde un dockerfile que este definido en el docker-compose.yml

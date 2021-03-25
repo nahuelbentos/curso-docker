@@ -1,0 +1,58 @@
+FROM baseImage
+    => SO donde corre nuestro contenedor
+      => FROM centos:7
+
+RUN command
+    => Comando que corre en el SO del contenedor
+      => Ejemplo: RUN yum install httpd -y 
+
+COPY source dest
+    => Permite agregar un file/directory dentro de donde esté el dockerfile al directorio dentro del contenedor
+      => Ejemplo: COPY beryllium  /var/www/html
+      
+ADD source dest
+    => Muy similar al COPY solo que ademas te permite agregar file/directory remotos (una url por ej.). 
+       Normalmente se utiliza COPY.
+      => Ejemplo: ADD startbootstrap-freelancer-master  /var/www/html
+
+CMD [ "executable" ]
+    => Comando que se ejecutará al iniciar el contenedor
+      => Ejemplo: CMD  apachectl -DFOREGROUND
+        => En este ejemplo esta levantando la instancia de apache
+
+ENV key=value
+    => Crea una variable de entorno
+      => Ejemplo: 
+          ENV contenido='NAhuel Bentos'
+          RUN echo "${contenido}, cómo va?" > /var/www/html/prueba.html
+
+WORKDIR [route]
+    => Deja situados a los demas comandos en la ruta [route] que definamos
+      => Ejemplo:
+        WORKDIR /var/www/html
+        COPY startbootstrap-freelancer-master . 
+          => El comando COPY estará situado en /var/wwww/html
+
+EXPOSE port
+    => Nos permite exponer un puerto distinto al que expone apache (en este caso)
+      => Ejemplo:
+        EXPOSE 8080
+
+LABEL key="value"
+    => Es simplemente una etiqueta que puede ir a cualquier nivel de la imagen, normalmente va al inicio.
+      => Ejemplo:
+        LABEL version=1.0
+        LABEL description="This is an apache image"
+        LABEL vendor="Nahuel Bentos"
+
+
+USER daemon
+    => Define el usuario que va a ejecutar las acciones por debajo de esta definicion
+      => Ejemplo:
+        RUN useradd nahuel
+        RUN chown nahuel /var/www/html/
+        USER nahuel
+
+
+VOLUME [ "/data" ]
+    => Sirve para dejar algo persistido auqnue se borre el contenedor

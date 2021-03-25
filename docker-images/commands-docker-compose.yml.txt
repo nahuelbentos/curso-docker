@@ -1,0 +1,23 @@
+Partes de un docker-compose.yml:
+  version: [Obligatoria]
+  services: [Obligatoria]
+
+  volumes: [Opcional]
+    => Para crear volumenes con docker-compose simplemente hay que agregar debajo del tag  "volumes:" lo siguiente:
+      => [volume-name]: 
+  network: [Opcional]
+
+  env_file: 
+    => sirve para definir un archivo que va a contener las variables de entorno
+
+
+Si queremos vincular un volumen nombrado a un contenedor tenemos que hacerlo (parecido) como en el siguiente ejemplo:
+  services:
+    web:
+      volumes:
+        - "[volume-name]:[volume-target-docker]"
+En este ejemplo el volume-name tiene que estar definido dentro del tag volumes que esta a la altura de services.
+
+
+depends_on: 
+  => Sirve para forzar a que se genere el servicio definido dentro de estas dependencias antes que este
